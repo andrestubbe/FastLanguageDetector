@@ -69,6 +69,46 @@ public class FastLanguageDetectorTest {
     }
 
     @Test
+    public void testEuropeanLanguages() {
+        // Nordic
+        assertEquals(Language.SWEDISH, FastLanguageDetector.detect("Hej, hur mår du idag? Det är mycket bra väder här."));
+        assertEquals(Language.DANISH, FastLanguageDetector.detect("Hej, hvordan har du det i dag? Det er et godt vejr."));
+        assertEquals(Language.NORWEGIAN, FastLanguageDetector.detect("Hei, hvordan går det med deg i dag? Dette er en fin dag."));
+        assertEquals(Language.ICELANDIC, FastLanguageDetector.detect("Góðan daginn, hvernig hefur þú það í dag? Takk fyrir."));
+        assertEquals(Language.FINNISH, FastLanguageDetector.detect("Hyvää päivää! Miten voit tänään? Kiitos paljon avusta."));
+
+        // Slavic (Latin)
+        assertEquals(Language.CZECH, FastLanguageDetector.detect("Dobrý den, jak se máte dnes v Praze? Děkuji za pomoc."));
+        assertEquals(Language.SLOVAK, FastLanguageDetector.detect("Dobrý deň, ako sa máte dnes v Bratislave? Veľmi pekne ďakujem."));
+        assertEquals(Language.CROATIAN, FastLanguageDetector.detect("Dobar dan, kako ste danas u Zagrebu? Hvala vam lijepa."));
+        assertEquals(Language.SLOVENIAN, FastLanguageDetector.detect("Dober dan, kako ste danes v Ljubljani? Hvala lepa za pomoč."));
+
+        // Baltic & Finno-Ugric
+        assertEquals(Language.ESTONIAN, FastLanguageDetector.detect("Tere päevast! Kuidas teil täna läheb? Tänan teid väga."));
+        assertEquals(Language.HUNGARIAN, FastLanguageDetector.detect("Jó napot kívánok! Hogy vagy ma? Nagyon szépen köszönöm a segítséget."));
+        assertEquals(Language.LITHUANIAN, FastLanguageDetector.detect("Laba diena, kaip jums šiandien sekasi? Labai ačiū už pagalbą."));
+        assertEquals(Language.LATVIAN, FastLanguageDetector.detect("Labdien! Kā jums šodien klājas? Liels paldies par palīdzību."));
+
+        // Romance & Regional
+        assertEquals(Language.ROMANIAN, FastLanguageDetector.detect("Bună ziua, ce mai faceți astăzi? Vă mulțumesc foarte mult."));
+        assertEquals(Language.CATALAN, FastLanguageDetector.detect("Bon dia a tothom! Com esteu avui a Catalunya? Moltes gràcies per tot."));
+        assertEquals(Language.GALICIAN, FastLanguageDetector.detect("Bo día a todos! Como estades hoxe en Galicia? Moitas grazas."));
+        assertEquals(Language.BASQUE, FastLanguageDetector.detect("Egun on guztioi! Kaixo, nola zaude gaur? Eskerrik asko zure laguntzagatik."));
+
+        // Celtic & Mediterranean
+        assertEquals(Language.ALBANIAN, FastLanguageDetector.detect("Mirëdita, si jeni sot në Tiranë? Faleminderit shumë për ndihmën."));
+        assertEquals(Language.MALTESE, FastLanguageDetector.detect("Bonġu lil kulħadd! Kif intom illum f'Malta? Grazzi ħafna."));
+        assertEquals(Language.IRISH, FastLanguageDetector.detect("Dia dhuit! Conas atá tú inniu? Go raibh míle maith agat."));
+        assertEquals(Language.WELSH, FastLanguageDetector.detect("Shwmae! Sut wyt ti heddiw yng Nghymru? Diolch yn fawr iawn."));
+
+        // Cyrillic European
+        assertEquals(Language.BULGARIAN, FastLanguageDetector.detect("Здравейте, как сте днес? Много благодаря за помощта в България."));
+        assertEquals(Language.BELARUSIAN, FastLanguageDetector.detect("Дзень добры! Як вашы справы сёння? Дзякуй вялікі за дапамогу ў Беларусі."));
+        assertEquals(Language.MACEDONIAN, FastLanguageDetector.detect("Здраво, како сте денес? Ви благодарам многу за помошта во Македонија."));
+        assertEquals(Language.SERBIAN, FastLanguageDetector.detect("Здраво, како сте данас? Хвала вам пуно на помоћи у Србији."));
+    }
+
+    @Test
     public void testNonLatinScripts() {
         // Russian / Cyrillic
         assertEquals(Language.RUSSIAN, FastLanguageDetector.detect("Привет, как твои дела сегодня?"));

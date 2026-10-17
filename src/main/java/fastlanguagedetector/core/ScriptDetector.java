@@ -25,6 +25,11 @@ public final class ScriptDetector {
         int cyrillic = 0;
         int ukrainianChars = 0;
         int russianChars = 0;
+        int belarusianChars = 0;
+        int macedonianChars = 0;
+        int serbianChars = 0;
+        int bulgarianHardSign = 0;
+
         int han = 0;
         int hiragana = 0;
         int katakana = 0;
@@ -54,10 +59,21 @@ public final class ScriptDetector {
                 latin++;
             } else if (block == UnicodeBlock.CYRILLIC || block == UnicodeBlock.CYRILLIC_SUPPLEMENTARY) {
                 cyrillic++;
-                if (cp == 'і' || cp == 'І' || cp == 'ї' || cp == 'Ї' || cp == 'є' || cp == 'Є' || cp == 'ґ' || cp == 'Ґ') {
+                // Check unique Cyrillic national characters
+                if (cp == 'ў' || cp == 'Ў') {
+                    belarusianChars++;
+                } else if (cp == 'ѓ' || cp == 'Ѓ' || cp == 'ќ' || cp == 'Ќ' || cp == 'ѕ' || cp == 'Ѕ') {
+                    macedonianChars++;
+                } else if (cp == 'ђ' || cp == 'Ђ' || cp == 'ћ' || cp == 'Ћ') {
+                    serbianChars++;
+                } else if (cp == 'ї' || cp == 'Ї' || cp == 'є' || cp == 'Є' || cp == 'ґ' || cp == 'Ґ') {
+                    ukrainianChars += 3;
+                } else if (cp == 'і' || cp == 'І') {
                     ukrainianChars++;
-                } else if (cp == 'ы' || cp == 'Ы' || cp == 'э' || cp == 'Э' || cp == 'ъ' || cp == 'Ъ' || cp == 'ё' || cp == 'Ё') {
+                } else if (cp == 'ы' || cp == 'Ы' || cp == 'э' || cp == 'Э' || cp == 'ё' || cp == 'Ё') {
                     russianChars++;
+                } else if (cp == 'ъ' || cp == 'Ъ') {
+                    bulgarianHardSign++;
                 }
             } else if (block == UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS ||
                        block == UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A ||
@@ -97,8 +113,26 @@ public final class ScriptDetector {
             return new ScriptAnalysis(Language.Script.CHINESE, Language.CHINESE, han, totalAlpha);
         }
         if (cyrillic >= totalAlpha * 0.30) {
-            Language cyrLang = (ukrainianChars > russianChars) ? Language.UKRAINIAN : Language.RUSSIAN;
-            return new ScriptAnalysis(Language.Script.CYRILLIC, cyrLang, cyrillic, totalAlpha);
+            if (belarusianChars > 0) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.BELARUSIAN, cyrillic, totalAlpha);
+            }
+            if (macedonianChars > 0) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.MACEDONIAN, cyrillic, totalAlpha);
+            }
+            if (serbianChars > 0) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.SERBIAN, cyrillic, totalAlpha);
+            }
+            if (ukrainianChars > 0 && ukrainianChars >= russianChars) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.UKRAINIAN, cyrillic, totalAlpha);
+            }
+            if (russianChars > 0) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.RUSSIAN, cyrillic, totalAlpha);
+            }
+            if (bulgarianHardSign > 0) {
+                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.BULGARIAN, cyrillic, totalAlpha);
+            }
+            // If common Cyrillic, let lexical matcher disambiguate or default
+            return new ScriptAnalysis(Language.Script.CYRILLIC, Language.UNKNOWN, cyrillic, totalAlpha);
         }
         if (arabic >= totalAlpha * 0.30) {
             return new ScriptAnalysis(Language.Script.ARABIC, Language.ARABIC, arabic, totalAlpha);

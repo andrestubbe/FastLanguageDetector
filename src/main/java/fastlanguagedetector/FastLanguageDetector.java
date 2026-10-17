@@ -68,53 +68,51 @@ public final class FastLanguageDetector {
             return new DetectionResult(script.detectedLanguage(), conf, script.primaryScript(), "Script:" + script.primaryScript());
         }
 
-        // 2. Level 2 & 3: Fast Latin Lexical & Diacritics Profiling
+        // 2. Level 2 & 3: Fast Lexical & Diacritics Profiling
         List<String> words = extractWords(text);
-
-        Map<Language, Double> scores = new EnumMap<>(Language.class);
-        for (Language l : StopwordProfiles.STOPWORDS.keySet()) {
-            scores.put(l, 0.0);
-        }
-
         int totalWords = words.size();
-        for (String w : words) {
-            for (Map.Entry<Language, Set<String>> entry : StopwordProfiles.STOPWORDS.entrySet()) {
-                if (entry.getValue().contains(w)) {
-                    scores.put(entry.getKey(), scores.get(entry.getKey()) + 1.0);
+
+        double[] scores = new double[Language.values().length];
+
+        for (int i = 0; i < totalWords; i++) {
+            Language[] matches = StopwordProfiles.WORD_INDEX.get(words.get(i));
+            if (matches != null) {
+                for (int j = 0; j < matches.length; j++) {
+                    scores[matches[j].ordinal()] += 1.0;
                 }
             }
         }
 
-        // Apply fast diacritics boost
-        for (Language l : StopwordProfiles.STOPWORDS.keySet()) {
-            double boost = StopwordProfiles.checkDiacriticsBoost(text, l);
-            if (boost > 0) {
-                scores.put(l, scores.get(l) + boost);
-            }
-        }
+        // Apply fast single-pass diacritics boost
+        StopwordProfiles.applyDiacritics(text, scores);
 
         // Find highest scoring language
-        Language bestLang = null;
+        int bestIdx = -1;
         double bestScore = 0.0;
         double secondScore = 0.0;
 
-        for (Map.Entry<Language, Double> entry : scores.entrySet()) {
-            double s = entry.getValue();
+        for (int i = 0; i < scores.length; i++) {
+            double s = scores[i];
             if (s > bestScore) {
                 secondScore = bestScore;
                 bestScore = s;
-                bestLang = entry.getKey();
+                bestIdx = i;
             } else if (s > secondScore) {
                 secondScore = s;
             }
         }
 
-        if (bestLang != null && bestScore > 0.0) {
+        if (bestIdx >= 0 && bestScore > 0.0) {
+            Language bestLang = Language.values()[bestIdx];
             double confidence = (totalWords > 0) ? Math.min(1.0, (bestScore / (bestScore + secondScore + 0.5))) : 0.75;
-            return new DetectionResult(bestLang, Math.max(0.51, confidence), Language.Script.LATIN, "LexicalProfile:" + bestLang.getCode());
+            return new DetectionResult(bestLang, Math.max(0.51, confidence), bestLang.getScript(), "LexicalProfile:" + bestLang.getCode());
         }
 
-        // Fallback for short or ambiguous Latin text
+        // Fallback for short or ambiguous text
+        if (script.primaryScript() == Language.Script.CYRILLIC) {
+            Language def = (fallback != null) ? fallback : Language.RUSSIAN;
+            return new DetectionResult(def, 0.40, Language.Script.CYRILLIC, "DefaultCyrillicFallback");
+        }
         Language def = (fallback != null) ? fallback : defaultFallback;
         return new DetectionResult(def, 0.35, Language.Script.LATIN, "DefaultLatinFallback");
     }
