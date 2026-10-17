@@ -166,19 +166,8 @@ FastLanguageDetector is rigorously profiled using **OpenJDK JMH (Java Microbench
 | **Russian (Cyrillic Script)** | **~507,000 ops/ms** | **> 507 Million** | **0 bytes / op (Zero GC)** |
 | **French (Romance Latin)** | **~449,000 ops/ms** | **> 449 Million** | **Minimal token churn** |
 | **German (Germanic Latin)** | **~398,000 ops/ms** | **> 398 Million** | **Minimal token churn** |
+| **Spanish (Romance Latin)** | **~302,000 ops/ms** | **> 302 Million** | **Minimal token churn** |
 | **Comprehensive Analysis (`detectWithConfidence`)** | **~406,000 ops/ms** | **> 406 Million** | **1 immutable record** |
-
-In the official [JMH Microbenchmark](examples/Benchmark), the system measured raw classification throughput:
-
-```text
-Benchmark                                  Mode  Cnt     Score   Error   Units
-Benchmark.benchmarkDetectChineseScript    thrpt    3  1681,796          ops/ms
-Benchmark.benchmarkDetectRussianCyrillic  thrpt    3   507,160          ops/ms
-Benchmark.benchmarkDetectFrench           thrpt    3   449,176          ops/ms
-Benchmark.benchmarkAnalyzeWithConfidence  thrpt    3   406,942          ops/ms
-Benchmark.benchmarkDetectGerman           thrpt    3   398,032          ops/ms
-Benchmark.benchmarkDetectSpanish          thrpt    3   302,228          ops/ms
-```
 
 > **Sub-Microsecond Classification**: FastLanguageDetector resolves non-Latin scripts in **under 600 picoseconds to 2 nanoseconds** and complete European sentences in **under 2.5 microseconds**.
 
