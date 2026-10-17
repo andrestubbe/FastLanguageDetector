@@ -136,22 +136,41 @@ FastLanguageDetector replaces neural bloat with a deterministic, multi-tier engi
 ## Architecture Overview
 
 ```text
-Incoming CharSequence / Text Stream
-               |
-               v
-  [Tier 1: ScriptDetector]  ── (Non-Latin Script detected?) ──> Immediate Non-Latin Result
-               |                                                (CJK, Arabic, Hebrew, Greek, Cyrillic)
-        (Latin Script)
-               v
-  [Token Extraction & Lowercase]  (Zero-Regex Scanner)
-               |
-               v
-  [Tier 2: Inverted Lexical Index]  (O(1) Map<String, Language[]> stopword scoring)
-               +
-  [Tier 3: Single-Pass Diacritics]  (Unique national markers: ß, ł, ř, ħ, ș, ė...)
-               |
-               v
-  [DetectionResult Synthesis]  ──> Language, BCP-47, Confidence (0.0-1.0), Script, Rule
+       ┌───────────────────────────────────────────────────────────────┐
+       │             Incoming CharSequence / Text Stream               │
+       └───────────────────────────────┬───────────────────────────────┘
+                                       │
+                                       ▼
+       ┌───────────────────────────────────────────────────────────────┐
+       │               Tier 1: Nanosecond ScriptDetector               │
+       │       Single-pass Unicode block scan & national switches      │
+       └───────────────┬───────────────────────────────┬───────────────┘
+                       │                               │
+        [Non-Latin Script Match]                [Latin Script]
+                       │                               │
+                       ▼                               ▼
+       ┌───────────────────────────────┐ ┌─────────────────────────────┐
+       │     Fast Non-Latin Exit       │ │ Zero-Regex Token Scanner    │
+       │  CJK, Cyrillic, Greek, Hindi, │ │ Lowercase word stream       │
+       │  Arabic, Hebrew (< 0.001 ms)  │ └─────────────┬───────────────┘
+       └───────────────┬───────────────┘               │
+                       │                               ▼
+                       │                 ┌─────────────────────────────┐
+                       │                 │ Tier 2: Inverted Index      │
+                       │                 │ O(1) Stopword multi-match   │
+                       │                 └─────────────┬───────────────┘
+                       │                               │
+                       │                               ▼
+                       │                 ┌─────────────────────────────┐
+                       │                 │ Tier 3: Diacritics Boost    │
+                       │                 │ Unique markers: ß, ł, ř, ħ… │
+                       │                 └─────────────┬───────────────┘
+                       │                               │
+                       ▼                               ▼
+       ┌───────────────────────────────────────────────────────────────┐
+       │                   DetectionResult Synthesis                   │
+       │   Language  •  BCP-47 Locale  •  Confidence  •  Provenance   │
+       └───────────────────────────────────────────────────────────────┘
 ```
 
 ---
