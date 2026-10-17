@@ -191,11 +191,6 @@ FastLanguageDetector is rigorously profiled using **OpenJDK JMH (Java Microbench
 
 > **True Zero-Allocation Hot Path**: Thanks to in-place `CharSequence` token scanning, a precomputed open-addressing word table, primitive integer Unicode range checks, and thread-local score buffers, standard language detection produces **0 bytes of heap garbage**. Latency across all scripts is strictly **sub-microsecond (135 ns - 870 ns)**.
 
-*Run the benchmarks locally:*
-```powershell
-.\run-benchmark.bat
-```
-
 ---
 
 ## API Quick Reference
