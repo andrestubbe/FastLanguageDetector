@@ -2,11 +2,9 @@ package fastlanguagedetector.core;
 
 import fastlanguagedetector.Language;
 
-import java.lang.Character.UnicodeBlock;
-
 /**
  * Ultra-fast Unicode Script and Block Detector.
- * Runs in nanoseconds by inspecting Unicode code points directly.
+ * Pure primitive integer range checks, zero allocations, zero UnicodeBlock overhead.
  */
 public final class ScriptDetector {
 
@@ -46,20 +44,23 @@ public final class ScriptDetector {
             int cp = Character.codePointAt(text, i);
             i += Character.charCount(cp);
 
+            // Fast-path ASCII letters
+            if (cp <= 0x007F) {
+                if ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z')) {
+                    totalAlpha++;
+                    latin++;
+                }
+                continue;
+            }
+
             if (!Character.isLetter(cp)) continue;
             totalAlpha++;
 
-            UnicodeBlock block = UnicodeBlock.of(cp);
-            if (block == null) continue;
-
-            if (block == UnicodeBlock.BASIC_LATIN ||
-                block == UnicodeBlock.LATIN_1_SUPPLEMENT ||
-                block == UnicodeBlock.LATIN_EXTENDED_A ||
-                block == UnicodeBlock.LATIN_EXTENDED_B) {
+            // Direct primitive range checks
+            if (cp <= 0x024F || (cp >= 0x1E00 && cp <= 0x1EFF)) {
                 latin++;
-            } else if (block == UnicodeBlock.CYRILLIC || block == UnicodeBlock.CYRILLIC_SUPPLEMENTARY) {
+            } else if (cp >= 0x0400 && cp <= 0x052F) {
                 cyrillic++;
-                // Check unique Cyrillic national characters
                 if (cp == 'ў' || cp == 'Ў') {
                     belarusianChars++;
                 } else if (cp == 'ѓ' || cp == 'Ѓ' || cp == 'ќ' || cp == 'Ќ' || cp == 'ѕ' || cp == 'Ѕ') {
@@ -75,25 +76,21 @@ public final class ScriptDetector {
                 } else if (cp == 'ъ' || cp == 'Ъ') {
                     bulgarianHardSign++;
                 }
-            } else if (block == UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS ||
-                       block == UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A ||
-                       block == UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS) {
+            } else if ((cp >= 0x4E00 && cp <= 0x9FFF) || (cp >= 0x3400 && cp <= 0x4DBF) || (cp >= 0xF900 && cp <= 0xFAFF)) {
                 han++;
-            } else if (block == UnicodeBlock.HIRAGANA) {
+            } else if (cp >= 0x3040 && cp <= 0x309F) {
                 hiragana++;
-            } else if (block == UnicodeBlock.KATAKANA || block == UnicodeBlock.KATAKANA_PHONETIC_EXTENSIONS) {
+            } else if ((cp >= 0x30A0 && cp <= 0x30FF) || (cp >= 0x31F0 && cp <= 0x31FF)) {
                 katakana++;
-            } else if (block == UnicodeBlock.HANGUL_SYLLABLES ||
-                       block == UnicodeBlock.HANGUL_JAMO ||
-                       block == UnicodeBlock.HANGUL_COMPATIBILITY_JAMO) {
+            } else if ((cp >= 0xAC00 && cp <= 0xD7AF) || (cp >= 0x1100 && cp <= 0x11FF) || (cp >= 0x3130 && cp <= 0x318F)) {
                 hangul++;
-            } else if (block == UnicodeBlock.ARABIC || block == UnicodeBlock.ARABIC_SUPPLEMENT) {
+            } else if ((cp >= 0x0600 && cp <= 0x06FF) || (cp >= 0x0750 && cp <= 0x077F) || (cp >= 0x08A0 && cp <= 0x08FF)) {
                 arabic++;
-            } else if (block == UnicodeBlock.GREEK || block == UnicodeBlock.GREEK_EXTENDED) {
+            } else if ((cp >= 0x0370 && cp <= 0x03FF) || (cp >= 0x1F00 && cp <= 0x1FFF)) {
                 greek++;
-            } else if (block == UnicodeBlock.HEBREW) {
+            } else if (cp >= 0x0590 && cp <= 0x05FF) {
                 hebrew++;
-            } else if (block == UnicodeBlock.DEVANAGARI || block == UnicodeBlock.DEVANAGARI_EXTENDED) {
+            } else if (cp >= 0x0900 && cp <= 0x097F) {
                 devanagari++;
             }
         }

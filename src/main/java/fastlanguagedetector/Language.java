@@ -1,5 +1,8 @@
 package fastlanguagedetector;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Supported Languages in FastLanguageDetector.
  * Covers all official European languages, key regional European languages, and major global languages.
@@ -66,6 +69,18 @@ public enum Language {
     // Fallback Unknown
     UNKNOWN("und", "und", "Unknown", Script.LATIN);
 
+    public static final Language[] ALL = values();
+    public static final int COUNT = ALL.length;
+
+    private static final Map<String, Language> BY_CODE = new HashMap<>(COUNT * 4);
+
+    static {
+        for (Language l : ALL) {
+            BY_CODE.put(l.code.toLowerCase(), l);
+            BY_CODE.put(l.bcp47.toLowerCase(), l);
+        }
+    }
+
     private final String code;
     private final String bcp47;
     private final String displayName;
@@ -95,14 +110,9 @@ public enum Language {
     }
 
     public static Language fromCode(String code) {
-        if (code == null) return UNKNOWN;
-        String clean = code.trim().toLowerCase();
-        for (Language l : values()) {
-            if (l.code.equals(clean) || l.bcp47.equalsIgnoreCase(clean)) {
-                return l;
-            }
-        }
-        return UNKNOWN;
+        if (code == null || code.isEmpty()) return UNKNOWN;
+        Language l = BY_CODE.get(code.trim().toLowerCase());
+        return (l != null) ? l : UNKNOWN;
     }
 
     public enum Script {

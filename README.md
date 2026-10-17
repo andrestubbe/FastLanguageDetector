@@ -209,11 +209,6 @@ See [docs/REFERENCE.md](docs/REFERENCE.md) for complete details.
 | **Interactive Showcase Demo** | [Demo.java](examples/Demo/src/main/java/fastlanguagedetector/demo/Demo.java) | `run-demo.bat` | Interactive CLI showcasing 43 language classifications and custom text testing. |
 | **JMH Microbenchmark Suite** | [Benchmark.java](examples/Benchmark/src/main/java/fastlanguagedetector/benchmark/Benchmark.java) | `run-benchmark.bat` | Formal OpenJDK JMH throughput measurements across European and global scripts. |
 
-> [!IMPORTANT]
-> **Standardized File Naming**:
-> - The JMH microbenchmark harness file and class must **always** be named `Benchmark.java` (located under `examples/Benchmark/src/main/java/fastlanguagedetector/benchmark/Benchmark.java`).
-> - The primary interactive demo file and class must **always** be named `Demo.java` (located under `examples/Demo/src/main/java/fastlanguagedetector/demo/Demo.java`).
-
 ---
 
 ## Installation

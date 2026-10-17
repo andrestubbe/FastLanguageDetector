@@ -15,6 +15,7 @@ public final class StopwordProfiles {
     public record Profile(Language language, Set<String> stopwords) {}
     public static final Profile[] PROFILES;
     public static final Map<String, Language[]> WORD_INDEX;
+    public static final WordTable WORD_TABLE;
 
     static {
         // --- GERMANIC ---
@@ -289,6 +290,8 @@ public final class StopwordProfiles {
         for (Map.Entry<Language, Set<String>> entry : STOPWORDS.entrySet()) {
             PROFILES[idx++] = new Profile(entry.getKey(), entry.getValue());
         }
+
+        WORD_TABLE = new WordTable(WORD_INDEX);
     }
 
     /**
@@ -411,6 +414,81 @@ public final class StopwordProfiles {
                 default:
                     break;
             }
+        }
+    }
+
+    public static Language[] lookupWord(CharSequence text, int start, int end) {
+        return WORD_TABLE.lookup(text, start, end);
+    }
+
+    public static final class WordTable {
+        private final Entry[] table;
+        private final int mask;
+
+        record Entry(String word, Language[] languages) {}
+
+        WordTable(Map<String, Language[]> map) {
+            int cap = 1;
+            while (cap < map.size() * 3) {
+                cap <<= 1;
+            }
+            this.mask = cap - 1;
+            this.table = new Entry[cap];
+
+            for (Map.Entry<String, Language[]> e : map.entrySet()) {
+                String w = e.getKey();
+                int h = hash(w, 0, w.length());
+                int slot = (h ^ (h >>> 16)) & mask;
+                while (table[slot] != null) {
+                    slot = (slot + 1) & mask;
+                }
+                table[slot] = new Entry(w, e.getValue());
+            }
+        }
+
+        public Language[] lookup(CharSequence text, int start, int end) {
+            int len = end - start;
+            if (len <= 0 || len > 32) return null;
+
+            int h = hash(text, start, end);
+            int slot = (h ^ (h >>> 16)) & mask;
+
+            while (table[slot] != null) {
+                Entry e = table[slot];
+                if (e.word.length() == len && matches(e.word, text, start, end)) {
+                    return e.languages;
+                }
+                slot = (slot + 1) & mask;
+            }
+            return null;
+        }
+
+        private static int hash(CharSequence cs, int start, int end) {
+            int h = 0;
+            for (int i = start; i < end; i++) {
+                char c = cs.charAt(i);
+                if (c >= 'A' && c <= 'Z') {
+                    c = (char) (c + 32);
+                } else if (c > 127) {
+                    c = Character.toLowerCase(c);
+                }
+                h = 31 * h + c;
+            }
+            return h;
+        }
+
+        private static boolean matches(String word, CharSequence text, int start, int end) {
+            int len = word.length();
+            for (int i = 0; i < len; i++) {
+                char c = text.charAt(start + i);
+                if (c >= 'A' && c <= 'Z') {
+                    c = (char) (c + 32);
+                } else if (c > 127) {
+                    c = Character.toLowerCase(c);
+                }
+                if (word.charAt(i) != c) return false;
+            }
+            return true;
         }
     }
 }
