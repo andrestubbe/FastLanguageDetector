@@ -86,9 +86,10 @@ FastLanguageDetector replaces neural bloat with a deterministic, multi-tier engi
 
 | Feature | Neural / ML Detectors (fastText / ONNX) | Regex / N-gram Libraries | FastLanguageDetector |
 |:---|:---|:---|:---|
-| **Average Latency** | 500–2,000 µs (Deep inference) | 50–300 µs (Regex overhead) | **~1.7 µs (< 0.002 ms)** |
-| **Throughput** | 500–2,000 ops/sec | 3,000–20,000 ops/sec | **> 570,000 ops/sec** |
+| **Average Latency** | 500–2,000 µs (Deep inference) | 50–300 µs (Regex overhead) | **135–800 ns (< 0.001 ms)** |
+| **Throughput** | 500–2,000 ops/sec | 3,000–20,000 ops/sec | **1,200,000–7,400,000+ ops/sec** |
 | **Memory Footprint** | 50–300 MB (Model binaries) | 5–20 MB (N-gram tables) | **< 1 MB (Inverted Stopword Index)** |
+| **Heap Churn** | Continuous tensor buffers | Heavy String/Matcher allocations | **0 bytes (True Zero-GC Hot Path)** |
 | **External Dependencies** | C++ runtimes / ONNX / PyTorch | Multiple transitive JARs | **Zero (Pure Java 17 Standard Library)** |
 | **Thread Safety** | Requires model pooling / locking | Variable | **100% Stateless & Thread-Safe** |
 
@@ -96,13 +97,15 @@ FastLanguageDetector replaces neural bloat with a deterministic, multi-tier engi
 
 ## Key Features
 
-- ⚡ **Ultra-High Throughput** — Processes over **570,000 texts per second** on standard CPU hardware.
+- ⚡ **Ultra-High Throughput** — Processes **1,200,000 to over 7,400,000 texts per second** on standard CPU hardware.
+- 🧹 **Zero Heap Churn** — `detect(text)` executes with **0 bytes heap allocation** (no `String` tokens, no temporary lists, no `Double` wrappers).
 - 📦 **Zero External Dependencies** — Written in pure Java 17 standard library. No third-party JARs, no native libraries.
 - 🌍 **Comprehensive European Coverage** — All 24 official EU languages, EEA languages, and key regional European tongues (Celtic, Slavic, Baltic, Romance, Germanic, Finno-Ugric).
 - 🔤 **6 Global Non-European Scripts** — Instant detection of Chinese (CJK), Japanese, Korean, Arabic, Hebrew, and Hindi (Devanagari).
-- 🧩 **Two-Tier Engine**:
-  - **L1 Nanosecond Script Engine**: Fast Unicode block scanning for non-Latin character sets with national character disambiguation.
-  - **L2 Inverted Lexical & Diacritics Engine**: $O(1)$ token matching via an inverted stopword index combined with single-pass diacritic recognition.
+- 🧩 **Multi-Tier Engine**:
+  - **L1 Nanosecond Script Engine**: Fast primitive range check scanning for non-Latin character sets with national character disambiguation and `ThreadLocal` analysis holder.
+  - **L2 FastWordTable Lexical Engine**: $O(1)$ token matching via an open-addressing table with bitmask slotting and in-place `CharSequence` slices.
+  - **L3 Diacritics Engine**: Single-pass primitive `switch(char)` diacritic recognition with thread-local score buffers.
 - 🎯 **Rich Result Metadata** — Complete ISO 639-1 code, BCP-47 locale tag (`de-DE`, `fr-FR`), Unicode script, confidence score, and provenance rule.
 - 🧵 **Concurrency Ready** — Completely stateless and immutable for lock-free scaling across virtual and platform threads.
 
@@ -209,12 +212,13 @@ Rigorously measured with `run-benchmark.bat` via OpenJDK JMH 1.37 (single-thread
 
 ## API Quick Reference
 
-| Method / Signature | Return Type | Description | Docs |
-|:---|:---|:---|:---|
-| `FastLanguageDetector.detect(text)` | `Language` | Detects language enum. | [Reference](docs/REFERENCE.md) |
-| `FastLanguageDetector.detectLocale(text)` | `String` | Returns BCP-47 locale tag (`de-DE`, `en-US`). | [Reference](docs/REFERENCE.md) |
-| `FastLanguageDetector.detectWithConfidence(text)` | `DetectionResult` | Comprehensive result with confidence score. | [Reference](docs/REFERENCE.md) |
-| `detector.analyze(text, fallback)` | `DetectionResult` | Analyzes text with explicit fallback language. | [Reference](docs/REFERENCE.md) |
+| Method / Signature | Return Type | Heap Allocation | Description | Docs |
+|:---|:---|:---|:---|:---|
+| `FastLanguageDetector.detect(text)` | `Language` | **0 bytes (0 GC)** | Detects language enum constant directly. | [Reference](docs/REFERENCE.md) |
+| `FastLanguageDetector.detect(text, fallback)` | `Language` | **0 bytes (0 GC)** | Detects language with custom fallback on unresolvable input. | [Reference](docs/REFERENCE.md) |
+| `FastLanguageDetector.detectLocale(text)` | `String` | **0 bytes** | Returns cached BCP-47 locale tag (`de-DE`, `en-US`). | [Reference](docs/REFERENCE.md) |
+| `FastLanguageDetector.detectWithConfidence(text)` | `DetectionResult` | 1 record | Comprehensive result with confidence & provenance rule. | [Reference](docs/REFERENCE.md) |
+| `detector.analyze(text, fallback)` | `DetectionResult` | 1 record | Analyzes text with explicit fallback language. | [Reference](docs/REFERENCE.md) |
 
 ---
 

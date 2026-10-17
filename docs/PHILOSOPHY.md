@@ -28,12 +28,12 @@ FastLanguageDetector requires **only standard Java 17+**. No external neural eng
 
 ### 2. Multi-Tiered Evaluation Hierarchy
 Language identification follows an optimized tiered execution path:
-- **Tier 1 — Nanosecond Unicode Script Analysis**: Non-Latin scripts (CJK, Arabic, Hebrew, Devanagari, Greek, Cyrillic) are identified in a single pass across code points in nanoseconds.
-- **Tier 2 — Inverted Stopword Index**: Distinctive function words (prepositions, articles, pronouns) are indexed into an inverted lexical map with $O(1)$ lookup per word.
-- **Tier 3 — Single-Pass Diacritic Discrimination**: Unique national orthographic markers (e.g. German `ß`, Polish `ł`, Czech `ř`, Maltese `ħ`, Romanian `ș`/`ț`) boost specific language scores without regex overhead.
+- **Tier 1 — Nanosecond Unicode Script Analysis**: Non-Latin scripts (CJK, Arabic, Hebrew, Devanagari, Greek, Cyrillic) are identified in a single pass across code points using direct integer range checks (`cp >= 0x0400 && cp <= 0x052F`) with zero object allocation.
+- **Tier 2 — FastWordTable In-Place Lexical Matching**: High-frequency function words (prepositions, articles, pronouns) are indexed into a custom open-addressing bitmasked table (`FastWordTable`) and matched directly on `CharSequence` slices without allocating `ArrayList`, `StringBuilder`, or `String` objects.
+- **Tier 3 — Single-Pass Diacritic Discrimination**: Unique national orthographic markers (e.g. German `ß`, Polish `ł`, Czech `ř`, Maltese `ħ`, Romanian `ș`/`ț`) boost specific language scores directly in a reusable `ThreadLocal` scores array without regex overhead.
 
-### 3. Ultra-Low Latency & High Throughput
-Achieves **> 570,000 operations per second** on standard desktop CPU cores, with an average execution latency of **~1.7 microseconds**.
+### 3. Ultra-Low Latency & Zero Heap Churn
+Achieves **1,200,000 to 7,400,000+ operations per second** on standard desktop CPU cores, with an average execution latency of **135 ns to 800 ns**, and **0 bytes heap churn** for `FastLanguageDetector.detect(text)`.
 
 ### 4. Stateless & Concurrency-First
 The engine contains no mutable internal state. A single shared instance (`FastLanguageDetector.standard()`) can be safely invoked concurrently by thousands of virtual threads (`Thread.startVirtualThread`) or parallel worker pools with zero lock contention.

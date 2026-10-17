@@ -8,16 +8,57 @@ import fastlanguagedetector.Language;
  */
 public final class ScriptDetector {
 
-    public record ScriptAnalysis(
-            Language.Script primaryScript,
-            Language detectedLanguage,
-            int scriptCharCount,
-            int totalCharCount
-    ) {}
+    private static final ThreadLocal<ScriptAnalysis> THREAD_LOCAL_ANALYSIS = ThreadLocal.withInitial(ScriptAnalysis::new);
+
+    public static final class ScriptAnalysis {
+        private Language.Script primaryScript;
+        private Language detectedLanguage;
+        private int scriptCharCount;
+        private int totalCharCount;
+
+        public ScriptAnalysis() {
+            set(Language.Script.LATIN, Language.UNKNOWN, 0, 0);
+        }
+
+        public ScriptAnalysis(Language.Script primaryScript, Language detectedLanguage, int scriptCharCount, int totalCharCount) {
+            set(primaryScript, detectedLanguage, scriptCharCount, totalCharCount);
+        }
+
+        public ScriptAnalysis set(Language.Script primaryScript, Language detectedLanguage, int scriptCharCount, int totalCharCount) {
+            this.primaryScript = primaryScript;
+            this.detectedLanguage = detectedLanguage;
+            this.scriptCharCount = scriptCharCount;
+            this.totalCharCount = totalCharCount;
+            return this;
+        }
+
+        public Language.Script primaryScript() {
+            return primaryScript;
+        }
+
+        public Language detectedLanguage() {
+            return detectedLanguage;
+        }
+
+        public int scriptCharCount() {
+            return scriptCharCount;
+        }
+
+        public int totalCharCount() {
+            return totalCharCount;
+        }
+    }
 
     public static ScriptAnalysis analyze(CharSequence text) {
+        return analyze(text, THREAD_LOCAL_ANALYSIS.get());
+    }
+
+    public static ScriptAnalysis analyze(CharSequence text, ScriptAnalysis out) {
+        if (out == null) {
+            out = new ScriptAnalysis();
+        }
         if (text == null || text.length() == 0) {
-            return new ScriptAnalysis(Language.Script.LATIN, Language.UNKNOWN, 0, 0);
+            return out.set(Language.Script.LATIN, Language.UNKNOWN, 0, 0);
         }
 
         int cyrillic = 0;
@@ -96,54 +137,54 @@ public final class ScriptDetector {
         }
 
         if (totalAlpha == 0) {
-            return new ScriptAnalysis(Language.Script.LATIN, Language.UNKNOWN, 0, 0);
+            return out.set(Language.Script.LATIN, Language.UNKNOWN, 0, 0);
         }
 
         // Japanese check (Hiragana or Katakana presence indicates Japanese immediately)
         if (hiragana > 0 || katakana > 0) {
-            return new ScriptAnalysis(Language.Script.JAPANESE, Language.JAPANESE, hiragana + katakana + han, totalAlpha);
+            return out.set(Language.Script.JAPANESE, Language.JAPANESE, hiragana + katakana + han, totalAlpha);
         }
         if (hangul > 0) {
-            return new ScriptAnalysis(Language.Script.KOREAN, Language.KOREAN, hangul, totalAlpha);
+            return out.set(Language.Script.KOREAN, Language.KOREAN, hangul, totalAlpha);
         }
         if (han > 0 && han >= totalAlpha * 0.30) {
-            return new ScriptAnalysis(Language.Script.CHINESE, Language.CHINESE, han, totalAlpha);
+            return out.set(Language.Script.CHINESE, Language.CHINESE, han, totalAlpha);
         }
         if (cyrillic >= totalAlpha * 0.30) {
             if (belarusianChars > 0) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.BELARUSIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.BELARUSIAN, cyrillic, totalAlpha);
             }
             if (macedonianChars > 0) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.MACEDONIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.MACEDONIAN, cyrillic, totalAlpha);
             }
             if (serbianChars > 0) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.SERBIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.SERBIAN, cyrillic, totalAlpha);
             }
             if (ukrainianChars > 0 && ukrainianChars >= russianChars) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.UKRAINIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.UKRAINIAN, cyrillic, totalAlpha);
             }
             if (russianChars > 0) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.RUSSIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.RUSSIAN, cyrillic, totalAlpha);
             }
             if (bulgarianHardSign > 0) {
-                return new ScriptAnalysis(Language.Script.CYRILLIC, Language.BULGARIAN, cyrillic, totalAlpha);
+                return out.set(Language.Script.CYRILLIC, Language.BULGARIAN, cyrillic, totalAlpha);
             }
             // If common Cyrillic, let lexical matcher disambiguate or default
-            return new ScriptAnalysis(Language.Script.CYRILLIC, Language.UNKNOWN, cyrillic, totalAlpha);
+            return out.set(Language.Script.CYRILLIC, Language.UNKNOWN, cyrillic, totalAlpha);
         }
         if (arabic >= totalAlpha * 0.30) {
-            return new ScriptAnalysis(Language.Script.ARABIC, Language.ARABIC, arabic, totalAlpha);
+            return out.set(Language.Script.ARABIC, Language.ARABIC, arabic, totalAlpha);
         }
         if (greek >= totalAlpha * 0.30) {
-            return new ScriptAnalysis(Language.Script.GREEK, Language.GREEK, greek, totalAlpha);
+            return out.set(Language.Script.GREEK, Language.GREEK, greek, totalAlpha);
         }
         if (hebrew >= totalAlpha * 0.30) {
-            return new ScriptAnalysis(Language.Script.HEBREW, Language.HEBREW, hebrew, totalAlpha);
+            return out.set(Language.Script.HEBREW, Language.HEBREW, hebrew, totalAlpha);
         }
         if (devanagari >= totalAlpha * 0.30) {
-            return new ScriptAnalysis(Language.Script.DEVANAGARI, Language.HINDI, devanagari, totalAlpha);
+            return out.set(Language.Script.DEVANAGARI, Language.HINDI, devanagari, totalAlpha);
         }
 
-        return new ScriptAnalysis(Language.Script.LATIN, Language.UNKNOWN, latin, totalAlpha);
+        return out.set(Language.Script.LATIN, Language.UNKNOWN, latin, totalAlpha);
     }
 }

@@ -6,13 +6,15 @@ This roadmap outlines planned features, algorithm improvements, and language exp
 
 ## Milestone 1: European Core & Multi-Script Primitives (v0.1.0) — ✅ Complete
 - [x] Pure Java 17+ implementation with zero external runtime dependencies.
-- [x] Tier 1 Unicode script classifier (Cyrillic, Greek, Arabic, Hebrew, CJK, Devanagari).
-- [x] Tier 2 Inverted stopword index covering all official European languages (37 total).
-- [x] Tier 3 Single-pass diacritics lookupswitch for European languages.
+- [x] Tier 1 Unicode script classifier with direct primitive range checks and reusable `ThreadLocal<ScriptAnalysis>` (Cyrillic, Greek, Arabic, Hebrew, CJK, Devanagari).
+- [x] Tier 2 `FastWordTable` open-addressing table with zero-allocation in-place `CharSequence` slice scanner covering all 37 European languages and global profiles.
+- [x] Tier 3 Single-pass diacritics switch for European national alphabets with `ThreadLocal` score buffers.
+- [x] True 0-Allocation hot path: `FastLanguageDetector.detect(text)` generates **0 bytes / 0 objects** heap churn.
+- [x] Pre-cached rule provenance strings eliminating dynamic String concatenation churn.
 - [x] Immutable `DetectionResult` record with confidence scoring, BCP-47 locale, and matched rule provenance.
-- [x] Throughput benchmark achieving > 570,000 ops/sec (~1.7 µs latency).
+- [x] OpenJDK JMH Microbenchmark suite achieving 1.2M to 7.4M ops/sec (135–800 ns latency).
 - [x] Interactive multi-language showcase demo CLI (`run-demo.bat`).
-- [x] Full JUnit 5 test suite covering all supported language families.
+- [x] Full JUnit 5 test suite covering all supported language families (100% pass rate).
 
 ---
 

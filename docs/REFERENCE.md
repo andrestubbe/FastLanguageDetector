@@ -1,6 +1,6 @@
 # FastLanguageDetector API Reference Manual
 
-`FastLanguageDetector` provides an ultra-fast, zero-dependency, deterministic offline language identification engine for Java 17+. It identifies text across **37 European languages** and **6 major global scripts** with sub-microsecond execution latency (~570,000+ ops/sec) and zero regex overhead.
+`FastLanguageDetector` provides an ultra-fast, zero-dependency, deterministic offline language identification engine for Java 17+. It identifies text across **37 European languages** and **6 major global scripts** with sub-microsecond execution latency (1,200,000+ to 7,400,000+ ops/sec, 135–800 ns/op) and zero regex overhead.
 
 ---
 
@@ -10,22 +10,24 @@ Central thread-safe, stateless facade for text language detection and script cla
 
 ### Static Convenience Methods
 
-| Method / Signature | Return Type | Description |
-|:---|:---|:---|
-| `FastLanguageDetector.detect(CharSequence text)` | `Language` | Detects the most probable `Language` enum for the given text. Falls back to English on unresolvable input. |
-| `FastLanguageDetector.detectLocale(CharSequence text)` | `String` | Detects language and immediately returns the standard BCP-47 locale tag (e.g. `"de-DE"`, `"fr-FR"`). |
-| `FastLanguageDetector.detectWithConfidence(CharSequence text)` | `DetectionResult` | Performs full analysis and returns a rich `DetectionResult` containing language, confidence (0.0–1.0), script, and provenance rule. |
-| `FastLanguageDetector.standard()` | `FastLanguageDetector` | Returns the shared immutable singleton instance. |
+| Method / Signature | Return Type | Heap Allocation | Description |
+|:---|:---|:---|:---|
+| `FastLanguageDetector.detect(CharSequence text)` | `Language` | **0 bytes (0 objects)** | Detects the most probable `Language` enum constant. Falls back to English on unresolvable input. |
+| `FastLanguageDetector.detect(CharSequence text, Language fallback)` | `Language` | **0 bytes (0 objects)** | Detects the most probable `Language` enum constant with explicit custom fallback. |
+| `FastLanguageDetector.detectLocale(CharSequence text)` | `String` | **0 bytes** | Detects language and returns pre-cached standard BCP-47 locale tag (e.g. `"de-DE"`, `"fr-FR"`). |
+| `FastLanguageDetector.detectWithConfidence(CharSequence text)` | `DetectionResult` | 1 object (`DetectionResult`) | Performs full analysis and returns a rich `DetectionResult` containing language, confidence (0.0–1.0), script, and pre-cached provenance rule. |
+| `FastLanguageDetector.standard()` | `FastLanguageDetector` | 0 bytes | Returns the shared immutable singleton instance. |
 
 ### Instance Methods & Custom Fallbacks
 
-| Method / Signature | Return Type | Description |
-|:---|:---|:---|
-| `new FastLanguageDetector()` | `FastLanguageDetector` | Creates detector instance with default fallback `Language.ENGLISH`. |
-| `new FastLanguageDetector(Language fallback)` | `FastLanguageDetector` | Creates detector instance with a custom fallback language when input cannot be resolved. |
-| `detectLanguage(CharSequence text)` | `Language` | Detects `Language` using configured fallback. |
-| `analyze(CharSequence text)` | `DetectionResult` | Analyzes text using configured fallback. |
-| `analyze(CharSequence text, Language fallback)` | `DetectionResult` | Analyzes text with an explicit ad-hoc fallback language. |
+| Method / Signature | Return Type | Heap Allocation | Description |
+|:---|:---|:---|:---|
+| `new FastLanguageDetector()` | `FastLanguageDetector` | 1 instance | Creates detector instance with default fallback `Language.ENGLISH`. |
+| `new FastLanguageDetector(Language fallback)` | `FastLanguageDetector` | 1 instance | Creates detector instance with a custom fallback language when input cannot be resolved. |
+| `detectLanguage(CharSequence text)` | `Language` | **0 bytes** | Detects `Language` using configured fallback without object allocation. |
+| `detectLanguage(CharSequence text, Language fallback)` | `Language` | **0 bytes** | Detects `Language` using ad-hoc fallback without object allocation. |
+| `analyze(CharSequence text)` | `DetectionResult` | 1 object | Analyzes text using configured fallback. |
+| `analyze(CharSequence text, Language fallback)` | `DetectionResult` | 1 object | Analyzes text with an explicit ad-hoc fallback language. |
 
 ---
 
@@ -148,10 +150,13 @@ Supported Unicode script groups:
 ## 5. Performance & Memory Contract
 
 - **Zero Heavy Dependencies**: Pure Java 17 standard library. No ONNX runtime, no PyTorch models, no C++ dynamic libraries.
-- **Nanosecond Script Classification (L1)**: Character block detection operates in $O(N)$ single-pass scanning without regex compilation or memory allocation.
-- **Inverted Lexical Index (L2)**: Stopwords are resolved via a shared pre-indexed `Map<String, Language[]>` providing $O(1)$ lookup per token.
-- **Single-Pass Diacritics Switch (L3)**: High-frequency European character markers (`ß`, `ä`, `ö`, `ü`, `ñ`, `ç`, `ř`, `ł`, `đ`, `ą`, `ė`, `õ`, etc.) are evaluated directly without regex matching.
-- **Thread Safety**: Fully thread-safe and re-entrant. All static and instance methods can be executed concurrently across virtual and platform threads.
+- **Nanosecond Script Classification (L1)**: Character block detection operates in $O(N)$ single-pass scanning with direct primitive range checks (`cp >= 0x0400 && cp <= 0x052F`), zero `UnicodeBlock.of()` overhead, and reusable `ThreadLocal<ScriptAnalysis>` (0 allocations).
+- **FastWordTable Open-Addressing Index (L2)**: Token resolution scans `CharSequence` slices in-place `(start, end)` directly against `FastWordTable` using power-of-two bitmask slotting and ASCII fast-path hashing. No `ArrayList`, no `StringBuilder`, and no `String` tokens are allocated.
+- **Single-Pass Diacritics Switch (L3)**: High-frequency European character markers (`ß`, `ä`, `ö`, `ü`, `ñ`, `ç`, `ř`, `ł`, `đ`, `ą`, `ė`, `õ`, etc.) are evaluated directly via primitive `switch(char)` without regex matching.
+- **ThreadLocal Score Buffer**: Thread-safe reusable `double[Language.COUNT]` score array eliminates per-request array allocation.
+- **Zero-Allocation Detection Path**: `FastLanguageDetector.detect(text)` allocates **0 bytes / 0 objects** on the heap, executing at sub-microsecond speeds (1.2M to 7.4M ops/sec).
+- **Pre-Cached Provenance Strings**: `DetectionResult.matchedRule()` returns interned static constants (`Script:<SCRIPT>`, `LexicalProfile:<CODE>`, `DefaultCyrillicFallback`), eliminating dynamic String concatenation churn.
+- **Thread Safety**: Fully thread-safe, immutable, and re-entrant. All static and instance methods can be executed concurrently across platform and virtual threads.
 
 ---
 

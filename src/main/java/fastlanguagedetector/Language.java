@@ -85,12 +85,14 @@ public enum Language {
     private final String bcp47;
     private final String displayName;
     private final Script script;
+    private final String ruleProvenance;
 
     Language(String code, String bcp47, String displayName, Script script) {
         this.code = code;
         this.bcp47 = bcp47;
         this.displayName = displayName;
         this.script = script;
+        this.ruleProvenance = "LexicalProfile:" + code;
     }
 
     public String getCode() {
@@ -109,6 +111,10 @@ public enum Language {
         return script;
     }
 
+    public String getRuleProvenance() {
+        return ruleProvenance;
+    }
+
     public static Language fromCode(String code) {
         if (code == null || code.isEmpty()) return UNKNOWN;
         Language l = BY_CODE.get(code.trim().toLowerCase());
@@ -124,6 +130,12 @@ public enum Language {
         ARABIC,
         GREEK,
         HEBREW,
-        DEVANAGARI
+        DEVANAGARI;
+
+        private final String ruleProvenance = "Script:" + name();
+
+        public String getRuleProvenance() {
+            return ruleProvenance;
+        }
     }
 }

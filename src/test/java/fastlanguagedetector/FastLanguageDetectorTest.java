@@ -136,11 +136,27 @@ public class FastLanguageDetectorTest {
         assertTrue(de.isConfident());
         assertEquals(Language.GERMAN, de.language());
         assertEquals("de-DE", de.getLocale());
+        assertEquals("LexicalProfile:de", de.matchedRule());
 
         DetectionResult ru = FastLanguageDetector.detectWithConfidence("Привет мир");
         assertTrue(ru.isConfident());
         assertEquals(Language.RUSSIAN, ru.language());
         assertEquals(Language.Script.CYRILLIC, ru.script());
+        assertEquals("LexicalProfile:ru", ru.matchedRule());
+
+        DetectionResult zh = FastLanguageDetector.detectWithConfidence("你好世界");
+        assertTrue(zh.isConfident());
+        assertEquals(Language.CHINESE, zh.language());
+        assertEquals(Language.Script.CHINESE, zh.script());
+        assertEquals("Script:CHINESE", zh.matchedRule());
+
+        DetectionResult empty = FastLanguageDetector.detectWithConfidence("");
+        assertEquals(Language.ENGLISH, empty.language());
+        assertEquals(FastLanguageDetector.RULE_EMPTY_INPUT, empty.matchedRule());
+
+        assertEquals(Language.SPANISH, FastLanguageDetector.detect("", Language.SPANISH));
+        assertEquals(Language.ITALIAN, FastLanguageDetector.detect(null, Language.ITALIAN));
+        assertEquals(Language.PORTUGUESE, FastLanguageDetector.detect("xyz 123456 !!!", Language.PORTUGUESE));
     }
 
     @Test
