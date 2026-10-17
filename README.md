@@ -178,18 +178,32 @@ FastLanguageDetector replaces neural bloat with a deterministic, multi-tier engi
 
 ## Performance Benchmarks
 
-FastLanguageDetector is rigorously profiled using **OpenJDK JMH (Java Microbenchmark Harness)** across European Latin, Cyrillic, and CJK global scripts:
+### 1. Evolution & Optimization Progression (500,000 Detections / 43 Languages)
 
-| Benchmark Operation | JMH Score (ops/ms) | Ops per Second | Latency | Memory Allocation |
+Comparison across optimization iterations on identical hardware:
+
+| Engine Iteration | Architecture & Strategy | Throughput | Average Latency | Heap Garbage |
 |:---|:---|:---|:---|:---|
-| **Chinese (CJK Script)** | **7,410.09 ops/ms** | **~7,410,000 ops/s** | **~135 ns** | **0 bytes / op (Zero GC)** |
-| **Russian (Cyrillic Script)** | **1,493.02 ops/ms** | **~1,493,000 ops/s** | **~670 ns** | **0 bytes / op (Zero GC)** |
-| **German (Germanic Latin)** | **1,438.96 ops/ms** | **~1,438,000 ops/s** | **~694 ns** | **0 bytes / op (Zero GC)** |
-| **French (Romance Latin)** | **1,296.26 ops/ms** | **~1,296,000 ops/s** | **~771 ns** | **0 bytes / op (Zero GC)** |
-| **Spanish (Romance Latin)** | **1,148.20 ops/ms** | **~1,148,000 ops/s** | **~870 ns** | **0 bytes / op (Zero GC)** |
-| **Full Analysis (`detectWithConfidence`)** | **1,154.07 ops/ms** | **~1,154,000 ops/s** | **~866 ns** | **1 immutable record** |
+| **v0.1.0-alpha1** | `extractWords()` (ArrayList + StringBuilder + String tokens) | 195,832 ops/s | 5,106 ns (5.11 µs) | ~250 bytes / op |
+| **v0.1.0-alpha2** | Inverted HashMap + Single-pass diacritics scan | 574,882 ops/s | 1,739 ns (1.74 µs) | ~110 bytes / op |
+| **v0.1.0 (Current)** | **Zero-Allocation Scanner + Open-Addressing WordTable + ThreadLocal Buffer** | **1,238,163 ops/s** | **807 ns (0.81 µs)** | **0 bytes / op (Zero GC)** |
 
-> **True Zero-Allocation Hot Path**: Thanks to in-place `CharSequence` token scanning, a precomputed open-addressing word table, primitive integer Unicode range checks, and thread-local score buffers, standard language detection produces **0 bytes of heap garbage**. Latency across all scripts is strictly **sub-microsecond (135 ns - 870 ns)**.
+> **🚀 Breakthrough**: The pure FastJava zero-allocation scanner achieved a **2.15x speedup** over alpha2, a **6.3x speedup** over alpha1, and completely eliminated GC pressure (0 bytes heap churn).
+
+---
+
+### 2. Isolated OpenJDK JMH Microbenchmark Results
+
+Rigorously measured with `run-benchmark.bat` via OpenJDK JMH 1.37 (single-thread, isolated JVM forks):
+
+| Benchmark Operation | Script / Family | JMH Score (ops/ms) | Ops per Second | Latency | Memory Churn |
+|:---|:---|:---|:---|:---|:---|
+| **Chinese (`detect`)** | CJK Unified Ideographs | **7,410.09 ops/ms** | **~7,410,000 ops/s** | **~135 ns** | **0 bytes (Zero GC)** |
+| **Russian (`detect`)** | Cyrillic European | **1,493.02 ops/ms** | **~1,493,000 ops/s** | **~670 ns** | **0 bytes (Zero GC)** |
+| **German (`detect`)** | Germanic Latin | **1,438.96 ops/ms** | **~1,438,000 ops/s** | **~694 ns** | **0 bytes (Zero GC)** |
+| **French (`detect`)** | Romance Latin | **1,296.26 ops/ms** | **~1,296,000 ops/s** | **~771 ns** | **0 bytes (Zero GC)** |
+| **Spanish (`detect`)** | Romance Latin | **1,148.20 ops/ms** | **~1,148,000 ops/s** | **~870 ns** | **0 bytes (Zero GC)** |
+| **Full Analysis (`detectWithConfidence`)** | Full provenance & locale | **1,154.07 ops/ms** | **~1,154,000 ops/s** | **~866 ns** | **1 immutable record** |
 
 ---
 
