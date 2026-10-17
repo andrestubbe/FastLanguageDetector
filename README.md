@@ -207,8 +207,6 @@ FastLanguageDetector is rigorously profiled using **OpenJDK JMH (Java Microbench
 | `FastLanguageDetector.detectWithConfidence(text)` | `DetectionResult` | Comprehensive result with confidence score. | [Reference](docs/REFERENCE.md) |
 | `detector.analyze(text, fallback)` | `DetectionResult` | Analyzes text with explicit fallback language. | [Reference](docs/REFERENCE.md) |
 
-See [docs/REFERENCE.md](docs/REFERENCE.md) for complete details.
-
 ---
 
 ## Technical Demos & Benchmarks
