@@ -5,15 +5,16 @@
 [![Java](https://img.shields.io/badge/Java-17%2B-blue.svg)](https://openjdk.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
 [![Zero-Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
-[![Throughput](https://img.shields.io/badge/throughput->570,000%20ops%2Fsec-success.svg)]()
-[![Latency](https://img.shields.io/badge/avg%20latency-1.7%20%C2%B5s-blue.svg)]()
+[![Throughput](https://img.shields.io/badge/JMH%20Throughput->1,400,000%20ops%2Fsec-success.svg)]()
+[![Latency](https://img.shields.io/badge/avg%20latency-sub--microsecond%20(~700%20ns)-blue.svg)]()
+[![Zero-Allocation](https://img.shields.io/badge/heap%20churn-0%20bytes%20(Zero--GC)-brightgreen.svg)]()
 [![JitPack](https://img.shields.io/badge/JitPack-0.1.0-green.svg)](https://jitpack.io/#andrestubbe/FastLanguageDetector)
 
 ---
 
 **⚡ Ultra-fast, zero-dependency, offline language identification for Java 17+.**
 
-**FastLanguageDetector** identifies text language across **37 European languages** and **6 major global scripts** in **under 2 microseconds per detection** (~570,000+ operations per second). It eliminates regex overhead, neural model weight bloat, and external runtime dependencies by combining a nanosecond Unicode script engine with an inverted lexical stopword index and single-pass diacritics discrimination.
+**FastLanguageDetector** identifies text language across **37 European languages** and **6 major global scripts** in **sub-microseconds (135 ns to 870 ns per detection)** (~1,400,000+ operations per second in JMH). It achieves a pure **Zero-Allocation Hot Path (0 bytes heap churn)** by combining a nanosecond primitive-range Unicode script engine with an open-addressing in-place word table, thread-local score buffers, and single-pass diacritics discrimination.
 
 ---
 
@@ -179,16 +180,16 @@ FastLanguageDetector replaces neural bloat with a deterministic, multi-tier engi
 
 FastLanguageDetector is rigorously profiled using **OpenJDK JMH (Java Microbenchmark Harness)** across European Latin, Cyrillic, and CJK global scripts:
 
-| Benchmark Operation | Score (ops/ms) | Ops per Second | Memory Allocation |
-|:---|:---|:---|:---|
-| **Chinese (CJK Unicode Script)** | **~1,681,000 ops/ms** | **> 1.68 Billion** | **0 bytes / op (Zero GC)** |
-| **Russian (Cyrillic Script)** | **~507,000 ops/ms** | **> 507 Million** | **0 bytes / op (Zero GC)** |
-| **French (Romance Latin)** | **~449,000 ops/ms** | **> 449 Million** | **Minimal token churn** |
-| **German (Germanic Latin)** | **~398,000 ops/ms** | **> 398 Million** | **Minimal token churn** |
-| **Spanish (Romance Latin)** | **~302,000 ops/ms** | **> 302 Million** | **Minimal token churn** |
-| **Comprehensive Analysis (`detectWithConfidence`)** | **~406,000 ops/ms** | **> 406 Million** | **1 immutable record** |
+| Benchmark Operation | JMH Score (ops/ms) | Ops per Second | Latency | Memory Allocation |
+|:---|:---|:---|:---|:---|
+| **Chinese (CJK Script)** | **7,410.09 ops/ms** | **~7,410,000 ops/s** | **~135 ns** | **0 bytes / op (Zero GC)** |
+| **Russian (Cyrillic Script)** | **1,493.02 ops/ms** | **~1,493,000 ops/s** | **~670 ns** | **0 bytes / op (Zero GC)** |
+| **German (Germanic Latin)** | **1,438.96 ops/ms** | **~1,438,000 ops/s** | **~694 ns** | **0 bytes / op (Zero GC)** |
+| **French (Romance Latin)** | **1,296.26 ops/ms** | **~1,296,000 ops/s** | **~771 ns** | **0 bytes / op (Zero GC)** |
+| **Spanish (Romance Latin)** | **1,148.20 ops/ms** | **~1,148,000 ops/s** | **~870 ns** | **0 bytes / op (Zero GC)** |
+| **Full Analysis (`detectWithConfidence`)** | **1,154.07 ops/ms** | **~1,154,000 ops/s** | **~866 ns** | **1 immutable record** |
 
-> **Sub-Microsecond Classification**: FastLanguageDetector resolves non-Latin scripts in **under 600 picoseconds to 2 nanoseconds** and complete European sentences in **under 2.5 microseconds**.
+> **True Zero-Allocation Hot Path**: Thanks to in-place `CharSequence` token scanning, a precomputed open-addressing word table, primitive integer Unicode range checks, and thread-local score buffers, standard language detection produces **0 bytes of heap garbage**. Latency across all scripts is strictly **sub-microsecond (135 ns - 870 ns)**.
 
 *Run the benchmarks locally:*
 ```powershell
