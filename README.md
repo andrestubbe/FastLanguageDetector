@@ -1,13 +1,9 @@
 # FastLanguageDetector 0.1.0 [ALPHA-2026-10-17] — Ultra-Fast Language Identification for Java
 
 [![Status](https://img.shields.io/badge/status-0.1.0-brightgreen.svg)](https://github.com/andrestubbe/FastLanguageDetector/releases/tag/0.1.0)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Java](https://img.shields.io/badge/Java-17%2B-blue.svg)](https://openjdk.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
-[![Zero-Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen.svg)]()
-[![Throughput](https://img.shields.io/badge/JMH%20Throughput->1,400,000%20ops%2Fsec-success.svg)]()
-[![Latency](https://img.shields.io/badge/avg%20latency-sub--microsecond%20(~700%20ns)-blue.svg)]()
-[![Zero-Allocation](https://img.shields.io/badge/heap%20churn-0%20bytes%20(Zero--GC)-brightgreen.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java](https://img.shields.io/badge/Java-17+-blue.svg)](https://www.java.com)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010+%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)]()
 [![JitPack](https://img.shields.io/badge/JitPack-0.1.0-green.svg)](https://jitpack.io/#andrestubbe/FastLanguageDetector)
 
 ---
